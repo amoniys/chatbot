@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天机器人</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- 引入 marked 库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            /* 浅色模式变量 */
+            --body-bg: #f8f9fa;
+            --main-container-bg: white;
+            --chat-list-bg: white;
+            --chat-content-bg: white;
+            --chat-container-bg: linear-gradient(135deg, #e3f2fd 0%, #f1f8e9 100%);
+            --user-message-bg: #e3f2fd;
+            --user-message-text: #1976d2;
+            --bot-message-bg: #f1f8e9;
+            --bot-message-text: #689f38;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --btn-primary-bg: #2196f3;
+            --btn-primary-hover-bg: #1976d2;
+        }
+
+        [data-theme="dark"] {
+            /* 深色模式变量 */
+            --body-bg: #1a1a1a;
+            --main-container-bg: #2d2d2d;
+            --chat-list-bg: #2d2d2d;
+            --chat-content-bg: #2d2d2d;
+            --chat-container-bg: linear-gradient(135deg, #3a3a3a 0%, #4b4b4b 100%);
+            --user-message-bg: #2a3f54;
+            --user-message-text: #8ab4f8;
+            --bot-message-bg: #3a4b3a;
+            --bot-message-text: #8bc34a;
+            --text-color: #ffffff;
+            --border-color: #444444;
+            --btn-primary-bg: #1a73e8;
+            --btn-primary-hover-bg: #1556b7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--body-bg);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .main-container {
+            background-color: var(--main-container-bg);
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-list {
+            width: 30%;
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            background-color: var(--chat-list-bg);
+            transition: background-color 0.3s ease;
+        }
+
+        .chat-content {
+            width: 70%;
+            padding: 20px;
+            background-color: var(--chat-content-bg);
+            transition: background-color 0.3s ease;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .chat-item {
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .chat-item:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-item.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        h1.text-center {
+            color: var(--text-color);
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        #chat-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: var(--chat-container-bg);
+            transition: background-color 0.3s ease;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            clear: both;
+        }
+
+        .user-message {
+            flex-direction: row;
+            justify-content: flex-end;
+            float: right;
+        }
+
+        .bot-message {
+            float: left;
+        }
+
+        .icon-avatar {
+            font-size: 24px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .user-icon {
+            color: var(--user-message-text);
+            margin-left: 10px;
+        }
+
+        .bot-icon {
+            color: var(--bot-message-text);
+            margin-right: 10px;
+        }
+
+        .message-content {
+            padding: 12px;
+            border-radius: 10px;
+            max-width: 70%;
+            position: relative;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message .message-content {
+            background-color: var(--user-message-bg);
+            color: var(--user-message-text);
+        }
+
+        .bot-message .message-content {
+            background-color: var(--bot-message-bg);
+            color: var(--bot-message-text);
+        }
+
+        .input-group {
+            gap: 10px;
+        }
+
+        #user-input {
+            border-radius: 20px;
+            padding: 12px 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            background-color: var(--main-container-bg);
+            color: var(--text-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .btn.btn-primary {
+            border-radius: 20px;
+            padding: 12px 30px;
+            background-color: var(--btn-primary-bg);
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn.btn-primary:hover {
+            background-color: var(--btn-primary-hover-bg);
+        }
+
+        #chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-container::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 4px;
+        }
+
+        #chat-container::-webkit-scrollbar-track {
+            background-color: var(--chat-content-bg);
+        }
+
+        /* 模式切换按钮样式 */
+        #theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--btn-primary-bg);
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #theme-toggle:hover {
+            background-color: var(--btn-primary-hover-bg);
+        }
+
+        /* 新增 loading 动画元素 */
+        #loading-indicator {
+            position: sticky;
+            top: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            z-index: 1;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+        }
+
+        [data-theme="dark"] #loading-indicator {
+            background-color: rgba(45, 45, 45, 0.9);
+        }
+
+        #loading-indicator .loading-icon {
+            color: var(--bot-message-text);
+            margin-right: 8px;
+        }
+
+        .message-time {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(3px);
+        }
+
+        .user-message .message-time {
+            background-color: rgba(227, 242, 253, 0.6);
+            color: #1976d2;
+            margin-right: 8px;
+        }
+
+        .bot-message .message-time {
+            background-color: rgba(241, 248, 233, 0.6);
+            color: #689f38;
+            margin-left: 8px;
+        }
+
+        [data-theme="dark"] .user-message .message-time {
+            background-color: rgba(42, 63, 84, 0.6);
+            color: #8ab4f8;
+        }
+
+        [data-theme="dark"] .bot-message .message-time {
+            background-color: rgba(58, 75, 58, 0.6);
+            color: #8bc34a;
+        }
+
+        .message-time:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+
+<body>
+    <button id="theme-toggle">切换深色模式</button>
+    <div class="main-container">
+        <div class="chat-list">
+            <button class="btn btn-primary new-chat-btn" onclick="createNewChat()">新建聊天</button>
+            <div id="chat-list-container"></div>
+        </div>
+        <div class="chat-content">
+            <h1 class="text-center">聊天机器人</h1>
+            <div id="chat-container"></div>
+            <div class="input-group">
+                <input type="text" id="user-input" class="form-control" placeholder="输入你的消息">
+                <button class="btn btn-primary" onclick="sendMessage()">发送</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 初始化主题
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeButtonText();
+        }
+
+        // 主题切换按钮事件
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeButtonText();
+        });
+
+        // 更新按钮文本
+        function updateThemeButtonText() {
+            const button = document.getElementById('theme-toggle');
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            button.textContent = currentTheme === 'dark' ? '切换浅色模式' : '切换深色模式';
+        }
+
+        let chats = [];
+        let currentChatId = null;
+        let loadingIndicator = null;
+
+        function createNewChat() {
+            const newChatId = Date.now();
+            const newChat = {
+                id: newChatId,
+                title: `聊天 ${chats.length + 1}`,
+                history: []
+            };
+            chats.push(newChat);
+            currentChatId = newChatId;
+            renderChatList();
+            clearChatContainer();
+        }
+
+        function renderChatList() {
+            const chatListContainer = document.getElementById('chat-list-container');
+            chatListContainer.innerHTML = '';
+            chats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = `chat-item ${chat.id === currentChatId ? 'active' : ''}`;
+                chatItem.textContent = chat.title;
+                chatItem.onclick = () => selectChat(chat.id);
+                chatListContainer.appendChild(chatItem);
+            });
+        }
+
+        function selectChat(chatId) {
+            currentChatId = chatId;
+            renderChatList();
+            const currentChat = chats.find(chat => chat.id === chatId);
+            clearChatContainer();
+            currentChat.history.forEach(message => {
+                appendMessage(message.content, message.sender);
+            });
+        }
+
+        function clearChatContainer() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = '';
+        }
+
+        async function sendMessage() {
+            if (!currentChatId) {
+                alert('请先创建或选择一个聊天');
+                return;
+            }
+            const userInput = document.getElementById('user-input');
+            const message = userInput.value.trim();
+            if (message) {
+                // 显示用户消息
+                appendMessage(message, 'user');
+                const currentChat = chats.find(chat => chat.id === currentChatId);
+                currentChat.history.push({ content: message, sender: 'user' });
+                userInput.value = '';
+
+                // 创建并显示 loading 动画
+                const loadingIndicator = createLoadingIndicator();
+
+                try {
+                    const response = await fetch('/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Chat-ID': currentChatId
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let botMessageElement = null;
+                    let partialResponse = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+
+                        const chunk = decoder.decode(value, { stream: true });
+                        const lines = chunk.split('\n');
+                        for (const line of lines) {
+                            if (line.startsWith('data: ')) {
+                                const dataStr = line.slice(6);
+                                if (dataStr === '[DONE]') {
+                                    // 移除 <｜end of sentence｜> 标记
+                                    partialResponse = partialResponse.replace(/<｜end of sentence｜>/g, '');
+                                    currentChat.history.push({ content: partialResponse, sender: 'bot' });
+                                    // 移除 loading 动画
+                                    removeLoadingIndicator(loadingIndicator);
+                                    return;
+                                }
+                                try {
+                                    const data = JSON.parse(dataStr);
+                                    const newText = data.response;
+                                    // 移除新文本中的 <｜end of sentence｜> 标记
+                                    const cleanedText = newText.replace(/<｜end of sentence｜>/g, '');
+                                    partialResponse += cleanedText;
+
+                                    if (!botMessageElement) {
+                                        botMessageElement = appendMessage('', 'bot');
+                                    }
+                                    // 使用 innerHTML 确保 Markdown 渲染
+                                    botMessageElement.querySelector('.message-content').innerHTML = marked.parse(partialResponse);
+                                } catch (error) {
+                                    console.error('Error parsing JSON:', error);
+                                }
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error fetching data:', error);
+                    // 移除 loading 动画
+                    removeLoadingIndicator(loadingIndicator);
+                }
+            }
+        }
+
+        // 创建 loading 动画元素
+        function createLoadingIndicator() {
+            const chatContainer = document.getElementById('chat-container');
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.id = 'loading-indicator';
+            loadingIndicator.innerHTML = `
+                <i class="loading-icon fa-solid fa-robot"></i>
+                机器人正在输入...
+            `;
+            chatContainer.prepend(loadingIndicator);
+            return loadingIndicator;
+        }
+
+        // 移除 loading 动画元素
+        function removeLoadingIndicator(loadingIndicator) {
+            if (loadingIndicator && loadingIndicator.parentNode) {
+                loadingIndicator.parentNode.removeChild(loadingIndicator);
+            }
+        }
+
+        function appendMessage(message, sender) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}-message`;
+
+            const iconElement = document.createElement('i');
+            iconElement.className = `icon-avatar ${sender}-icon`;
+            if (sender === 'user') {
+                iconElement.classList.add('fa-solid', 'fa-user');
+            } else {
+                iconElement.classList.add('fa-solid', 'fa-robot');
+            }
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            if (sender === 'bot') {
+                contentDiv.innerHTML = marked.parse(message);
+            } else {
+                contentDiv.textContent = message;
+            }
+
+            // 获取当前时间
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const preciseTime = `${hours}:${minutes}:${seconds}`;
+            const displayTime = `${hours}:${minutes}`;
+
+            const timeElement = document.createElement('span');
+            timeElement.className = 'message-time';
+            timeElement.textContent = displayTime;
+            timeElement.title = `发送于 ${now.toLocaleString()} ${preciseTime}`;
+
+            if (sender === 'user') {
+                messageDiv.appendChild(timeElement);
+                messageDiv.appendChild(contentDiv);
+                messageDiv.appendChild(iconElement);
+            } else {
+                messageDiv.appendChild(iconElement);
+                messageDiv.appendChild(contentDiv);
+                messageDiv.appendChild(timeElement);
+            }
+
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return messageDiv;
+        }
+
+        function showLoading() {
+            const chatContainer = document.getElementById('chat-container');
+            loadingIndicator = document.getElementById('loading-indicator');
+
+            loadingIndicator.style.display = 'flex';
+            loadingIndicator.style.alignItems = 'center';
+        }
+
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+        }
+
+        // 支持回车键发送消息
+        document.getElementById('user-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // 初始化创建一个新聊天
+        createNewChat();
+    </script>
+</body>
+
+</html>

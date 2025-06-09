@@ -1,0 +1,9 @@
+@"
+chatbot_env/
+local_models/
+__pycache__/
+*.pyc
+*.log
+.DS_Store
+Thumbs.db
+"@ | Out-File -Encoding utf8 .gitignore
